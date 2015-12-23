@@ -4,11 +4,12 @@
 	<style>
 
 		body {
-		  font: 10px sans-serif;
+		  font: sans-serif;
+		  font-size: 10px;
 		}
 
 		.bar {
-		  fill: steelblue;
+		  
 		  shape-rendering: crispEdges;
 		}
 
@@ -18,12 +19,57 @@
 		  shape-rendering: crispEdges;
 		}
 
+		div.tooltip{
+			position : absolute;
+			text-align: center;
+			width: 60px;
+			height: 28px;
+			padding: 2px;
+			font: 12px sans-serif;
+			background: lightsteelblue;
+			border-radius: 0px;
+			pointer-events:none;
+
+		}
+
+		.bar:hover{
+			fill:skyblue;
+		}
+		.d3-tip {
+		  line-height: 1;
+		  font-weight: bold;
+		  padding: 12px;
+		  background: rgba(0, 0, 0, 0.8);
+		  color: #fff;
+		  border-radius: 2px;
+		}
+
+		/* Creates a small triangle extender for the tooltip */
+		.d3-tip:after {
+		  box-sizing: border-box;
+		  display: inline;
+		  font-size: 10px;
+		  width: 100%;
+		  line-height: 1;
+		  color: rgba(0, 0, 0, 0.8);
+		  content: "\25BC";
+		  position: absolute;
+		  text-align: center;
+		}
+
+		/* Style northward tooltips differently */
+		.d3-tip.n:after {
+		  margin: -1px 0 0 0;
+		  top: 100%;
+		  left: 0;
+		}
 		
 
 	</style>
 </html>
 <body>
 	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
 	<script>
 	
 		var margin = {top: 10, right: 30, bottom: 30, left: 50},
@@ -34,14 +80,36 @@
 		var formatDate = d3.time.format("%m/%y");
 		var formatCount = d3.format(",.0f");
 
+		//month converter
+		var monthNames = ["January", "February", "March", "April", "May", "June",
+		  "July", "August", "September", "October", "November", "December"
+		];
+		//var color_lookup =["#550000","#660000","#770000","#880000","#990000","#BB0000","#CC0000","#BB0000","#990000","#880000","#770000","#660000"];
+		//color scale for bars
+
+        var colorScale = d3.scale.linear()
+        				 .domain([0,6])
+        				 .range(["red", "blue"])
+
+		//this format is for tooltip
+		var formatToolTime = d3.time.format("%e %B");
+
 		var x = d3.time.scale().range([0, width]);
 		var y = d3.scale.linear().range([height, 0]);
 
 		var xAxis = d3.svg.axis().scale(x)
-		  .orient("bottom").tickFormat(formatDate);
+		  .orient("bottom").tickFormat(formatDate).ticks(30);
 
 		var yAxis = d3.svg.axis().scale(y)
 		  .orient("left").ticks(6);
+
+		//tip
+		var tip = d3.tip()
+		  .attr('class', 'd3-tip')
+		  .offset([-10, 0])
+		  .html(function(d) {
+		    return "<strong>Month:</strong> <span style='color:red'>" + monthNames[d.x.getMonth()]+ "</span>";
+		  });
 
 		// Create the SVG drawing area
 		var svg = d3.select("body")
@@ -50,6 +118,9 @@
 		  .attr("height", height + margin.top + margin.bottom)
 		  .append("g")
 		  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		svg.call(tip);
+
 		//Add the Title of the Graph
 		svg.append("text")
         .attr("x", (width / 2))             
@@ -66,7 +137,7 @@
 		    d.created_date = parseDate(d["Date"]);
 		  });
 
-		  // Determine the first and list dates in the data set
+		  // Determine the first and last dates in the data set
 		  var monthExtent = d3.extent(data, function(d) { return d.created_date; });
 
 		  // Create one bin per month, use an offset to include the first and last months
@@ -84,6 +155,7 @@
 		  // Scale the range of the data by setting the domain
 		  x.domain(d3.extent(monthBins));
 		  y.domain([0, d3.max(histData, function(d) { return d.y; })]);
+		  console.log(histData)
 
 		  // Set up one bar for each bin
 		  // Months have slightly different lengths so calculate the width for each bin
@@ -95,11 +167,17 @@
 		      .data(histData)
 		    .enter().append("rect")
 		      .attr("class", "bar")
+		      .attr("fill", function(d){
+		      	var colorVal = Math.abs(d.x.getMonth() - 6);
+		      	return colorScale(colorVal);
+		      })
 		      .attr("x", function(d) { return x(d.x); })
 		      .attr("width", function(d) { return x(new Date(d.x.getTime() + d.dx))-x(d.x)-1; })
 		      .attr("y", function(d) { return y(d.y); })
-		      .attr("height", function(d) { return height - y(d.y); });
-		  console.log("you didn't delete the wrong thing, don't worry dog jumpmanjumpmanjumpman")
+		      .attr("height", function(d) { return height - y(d.y); })
+		      .on('mouseover', tip.show)
+		      .on('mouseout', tip.hide);
+
 		  // Add the X Axis
 		  svg.append("g")
 		      .attr("class", "x axis")
@@ -125,3 +203,4 @@
 
 	</script>
 </body>
+</html>
