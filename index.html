@@ -84,8 +84,6 @@
 		var monthNames = ["January", "February", "March", "April", "May", "June",
 		  "July", "August", "September", "October", "November", "December"
 		];
-		//var color_lookup =["#550000","#660000","#770000","#880000","#990000","#BB0000","#CC0000","#BB0000","#990000","#880000","#770000","#660000"];
-		//color scale for bars
 
         var colorScale = d3.scale.linear()
         				 .domain([0,6])
@@ -130,6 +128,7 @@
         .style("text-decoration", "underline")  
         .text("Number of Homicides per Month in Chicago");
 		// Get the data
+		
 		d3.csv("Homicide2present.csv", function(error, data) {
 
 		  // Parse the date strings into javascript dates
@@ -155,19 +154,20 @@
 		  // Scale the range of the data by setting the domain
 		  x.domain(d3.extent(monthBins));
 		  y.domain([0, d3.max(histData, function(d) { return d.y; })]);
-		  console.log(histData)
+		  console.log(histData);
+		  console.log(histData[0].length);
+		  console.log(histData[0][0].Date);
 
 		  // Set up one bar for each bin
 		  // Months have slightly different lengths so calculate the width for each bin
-		  // Note: dx, the width of the histogram bin, is in milliseconds so convert the x value
+		  //convert the x value
 		  // into UTC time and convert the sum back to a date in order to help calculate the width
-		  // Thanks to npdoty for pointing this out in this stack overflow post:
-		  // http://stackoverflow.com/questions/17745682/d3-histogram-date-based
 		  svg.selectAll(".bar")
 		      .data(histData)
 		    .enter().append("rect")
 		      .attr("class", "bar")
 		      .attr("fill", function(d){
+		      	//sets up the color scale
 		      	var colorVal = Math.abs(d.x.getMonth() - 6);
 		      	return colorScale(colorVal);
 		      })
